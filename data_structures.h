@@ -33,4 +33,4 @@ void printQueue(Queue *queue);
 void scheduler(Process* process_data);
 
 // interpretador
-void interpreter();
+int interpreter(Queue* list);

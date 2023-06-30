@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "typeinfo": "c",
+        "fits.h": "c",
+        "data_structures.h": "c"
+    }
+}

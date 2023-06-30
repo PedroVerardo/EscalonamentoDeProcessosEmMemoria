@@ -5,10 +5,10 @@
 #include <time.h>
 #include "data_structures.h"
 
+//get the information
+int interpreter(Queue* queue) {
 
-void interpreter(Process* process_data) {
-
-    int number_of_process, qtd_info;
+    int number_of_process, qtd_info, cont = 0;
     
 
     FILE *process_file = fopen("exec.txt", "r");
@@ -40,11 +40,12 @@ void interpreter(Process* process_data) {
             }
         }
         current_process->is_ready = 1;
-        *process_data = *current_process; 
+        enqueue(queue, current_process);
         //sleep(1);
     }
 
     fclose(process_file);
+    return number_of_process;
 }
 
 void print(Process* p, int k){

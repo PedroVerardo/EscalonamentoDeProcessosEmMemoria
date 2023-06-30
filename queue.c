@@ -49,10 +49,11 @@ void printQueue(Queue *queue) {
     int i = queue->front;
 
     while (count > 0) {
-        printf("Element %d: %s\n", i, queue->arr[i]->name);
+        printf("Element %d: %d -> ", i, queue->arr[i]->size_in_byts);
         i = (i + 1) % MAX_PROCESS_COUNT;
         count--;
     }
+    printf("Null\n");
 }
 
 
