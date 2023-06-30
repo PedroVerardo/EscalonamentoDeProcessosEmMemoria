@@ -8,7 +8,7 @@
 //get the information
 int interpreter(Queue* queue) {
 
-    int number_of_process, qtd_info, cont = 0;
+    int number_of_process, qtd_info;
     
 
     FILE *process_file = fopen("exec.txt", "r");
