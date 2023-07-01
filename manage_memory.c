@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include "partition.h"
 int second_reference;
 char vizualize_arr[16][2];
 
@@ -55,6 +56,10 @@ void vizualizer(char* arr[16][2], Process p, int ini_pos){
     print_arr_char(arr);
 }
 
+void remove_from_memory(short* stack){
+
+}
+
 int main(void){
     short stack = 0;
     int cont = 0;
@@ -73,36 +78,48 @@ int main(void){
     
 
     while(1){
-        if(is_empty(&queue) && is_empty(&blocked_queue) && !is_running){
-            printf("nao ha mais processos\n");
-            break;
-        }
 
         if (gettimeofday(&current_time, NULL) == -1) {
             printf("Erro na verificação do horário");
             exit(1);
         }
-        second_reference = current_time.tv_sec % 60;
+        second_reference = current_time.tv_sec;
 
-        //nao funciona
-        if(cont%4 == 0 && current_second != second_reference && is_running == 0){
-            actual = dequeue(&queue);
+        //process is finalized
+        if(is_running == 1 && cont%4 == 0){
+            is_running = 0;
+            printf("tempo do io: %d\n", actual->IO_time[actual->cont_exec]);
+            //colocar a alocação da thread de io aq
+            
+        }
+
+        if(is_empty(&queue) && is_empty(&blocked_queue) && !is_running){
+            printf("nao ha mais processos\n");
+            break;
+        }
+
+        //simula o time slice de 4(falta)
+        if(cont%4 == 0 && current_second != second_reference){
+            if(!is_empty(&queue)){actual = dequeue(&queue);}
+
+            
             printf("Process name: p%d\n", actual->name2);
+            printf("process time: %d\n",actual->exec_times[1]);
 
             int ini_pos = worst_fit(actual->size_in_byts, &stack);
             printBits(stack);
-            if(ini_pos != -1){
-                vizualizer(&vizualize_arr, *actual, ini_pos);
-            }
             
-            is_running = 0;
+            if(ini_pos != -1){
+                
+            }
+            vizualizer(&vizualize_arr, *actual, ini_pos);
+            is_running = 1;
         }
 
         if (current_second != second_reference){
             printf("[CLOCK] segundo atual = %d\n", second_reference);
             current_second = second_reference;
             cont ++;
-            
         } 
 
         

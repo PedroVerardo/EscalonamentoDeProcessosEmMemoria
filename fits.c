@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "fits.h"
 
 // returns the value plus internal fragmentation
 int calculate_size(int size) {
@@ -11,6 +12,7 @@ int calculate_size(int size) {
 
   else { return 8; }
 }
+
 
 // func to convert the size to bit ocuppation O(1)
 int quadfunc(int value) { return (9 * value * value) - (48 * value) + 63; }
@@ -128,7 +130,8 @@ int worst_fit(int process_tam, short *stack) {
 }
 
 void deallocate(int tam_in_kb, int qtd_shifts, short *stack) {
-  int bits_allocated = quadfunc(tam_in_kb);
+  int partiton_size = calculate_size(tam_in_kb);
+  int bits_allocated = quadfunc(partiton_size);
   int bits_in_position = (bits_allocated << qtd_shifts) ^ 0xffff;
   *stack &= bits_in_position;
 }

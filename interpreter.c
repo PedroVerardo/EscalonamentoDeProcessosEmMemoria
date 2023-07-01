@@ -41,7 +41,6 @@ int interpreter(Queue* queue) {
         }
         current_process->is_ready = 1;
         enqueue(queue, current_process);
-        //sleep(1);
     }
 
     fclose(process_file);
