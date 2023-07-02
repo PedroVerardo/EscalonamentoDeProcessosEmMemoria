@@ -27,7 +27,7 @@ partition create_partition(int ini_time, int size_in_bytes, int name){
 ////////////
 void printa(partition_list *lista) {
   for (partition_list *p = lista; p != NULL; p = p->prox) {
-    printf("%d ", p->val);
+    printf("Nome: %d\nInicio: %d\nTamanho: %d\n", p->val.name, p->val.ini, p->val.tam);
   }
 }
 

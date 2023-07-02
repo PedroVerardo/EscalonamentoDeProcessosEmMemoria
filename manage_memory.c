@@ -17,7 +17,7 @@ char covert_int_to_char(int val){
     return zero + val;
 }
 
-void inicialize_arr(char* arr[16][2]){
+void inicialize_arr(char arr[16][2]){
     for(int i = 0; i < 16; i++){
         for(int j = 0; j < 2; j++){
             arr[i][j] = '0';
@@ -26,7 +26,7 @@ void inicialize_arr(char* arr[16][2]){
     }
 }
 
-void print_arr_char(char* vizualizer_arr[16][2]){
+void print_arr_char(char vizualizer_arr[16][2]){
     for(int i = 0; i < 16; i++){
         printf("[");
         for(int j = 0; j < 2; j++){
@@ -37,10 +37,10 @@ void print_arr_char(char* vizualizer_arr[16][2]){
     printf("\n");
 }
 
-void vizualizer(char* arr[16][2], Process p, int ini_pos){
+void vizualizer(char arr[16][2], Process p, int ini_pos){
     int tam = calculate_size(p.size_in_byts);
-    int ini = ini_pos;
-    int cont = 0;
+    // int ini = ini_pos;
+    // int cont = 0;
     for(int i = 0; i < 16; i++){
         if(i >= ini_pos && i <= ini_pos + tam- 1){
             if(i >=ini_pos + p.size_in_byts){
@@ -112,7 +112,7 @@ int main(void){
             if(ini_pos != -1){
                 
             }
-            vizualizer(&vizualize_arr, *actual, ini_pos);
+            vizualizer(vizualize_arr, *actual, ini_pos);
             is_running = 1;
         }
 

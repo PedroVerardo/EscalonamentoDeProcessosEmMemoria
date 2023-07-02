@@ -6,7 +6,7 @@ typedef struct Partition{
     int ini;
     int tam;
     int name;
-}partition;
+} partition;
 
 struct Partition_list {
   partition val;
