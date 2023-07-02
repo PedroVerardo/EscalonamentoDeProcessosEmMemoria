@@ -4,9 +4,14 @@
 #include <pthread.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
 #include "partition.h"
+
 int second_reference;
 char vizualize_arr[16][2];
+Queue queue;
+Queue blocked_queue;
 
 void manager(short* stack){
 
@@ -57,13 +62,51 @@ void vizualizer(char arr[16][2], Process p, int ini_pos){
 }
 
 void* blockWhileIO(void* process) {
-    printf("Thread is running\n");
     Process* p = (Process*) process;
     int time = p->operations[p->currentOperationIndex + 1];
-    printf("tempo de IO: %d\n", time);
+    printf("Bloqueando P%d para IO. Tempo de IO: %d\n", p->processName, time);
     sleep(time);
-    printf("IO finalizado. Adicionando o processo P%d na fila de prontos\n", p->processName);
+    printf("IO finalizado. Retirando o processo P%d da fila de bloqueados\n", p->processName);
+    dequeue(&blocked_queue); // retirando da fila de bloqueados
+    if (p->operations[p->currentOperationIndex + 2] == 0) { // processo finalizado
+        printf("Processo P%d finalizado\n", p->processName);
+        free(process);
+    } else {
+        printf("Adicionando o processo P%d na fila de prontos\n", p->processName);
+        p->currentOperationIndex += 2;
+        enqueue(&queue, p);
+        p->isBlocked = 0;
+    }
     pthread_exit(NULL);
+}
+
+
+void interruptCurrentProcess(Process* currentProcess) {
+
+    pthread_t thread_IO;
+    // verificar se a próxima execução é IO
+    int index = currentProcess->currentOperationIndex;
+    if (currentProcess->operations[index] == 0 && currentProcess->operations[index + 1] != 0) {
+        // proxima operação é um IO
+        // coloca na lista de bloqueados
+        currentProcess->isBlocked = 1;
+        enqueue(&blocked_queue, currentProcess);
+
+        // Abre thread que verifica o tempo do IO
+        // int IO_time = currentProcess->operations[index + 1];
+        if (pthread_create(&thread_IO, NULL, blockWhileIO, currentProcess) != 0) {
+            printf("Erro na criacao da thread");
+            exit(EXIT_FAILURE);
+        }
+
+    } else if (currentProcess->operations[index] != 0) { // exec não finalizado. Colocar na lista de prontos
+        enqueue(&queue, currentProcess);
+        currentProcess->isBlocked = 0;
+    } else if (currentProcess->operations[index + 1] == 0) { // processo finalizado
+        printf("O processo P%d foi finalizado\n", currentProcess->processName);
+        free(currentProcess);
+    }            
+
 }
 
 
@@ -71,12 +114,9 @@ int main(void){
     short stack = 0;
     int nCurrentProcessTimeSlice = 0;
     int is_running = 0;
-    Queue queue;
-    Queue blocked_queue;
     Process* currentProcess;
     struct timeval current_time;
     int current_second;
-    pthread_t thread_IO;
 
     initialize(&queue);
     initialize(&blocked_queue);
@@ -97,31 +137,15 @@ int main(void){
         // passaram-se 4 time slices e algum processo está executando
         if(is_running == 1 && nCurrentProcessTimeSlice % 4 == 0){
             is_running = 0;
-
-            // verificar se a próxima execução é IO
-            int index = currentProcess->currentOperationIndex;
-            if (currentProcess->operations[index] == 0 && currentProcess->operations[index + 1] != 0) {
-                // proxima operação é um IO
-                // coloca na lista de bloqueados
-                currentProcess->isBlocked = 1;
-                enqueue(&blocked_queue, currentProcess);
-
-                // Abre thread que verifica o tempo do IO
-                // int IO_time = currentProcess->operations[index + 1];
-                if (pthread_create(&thread_IO, NULL, blockWhileIO, currentProcess) != 0) {
-                    printf("Erro na criacao da thread");
-                    exit(EXIT_FAILURE);
-                }
-
-            }
-
-            // se sim, .  e da wait nesse tempo.
-            // se não, coloca na fila de prontos.
-            
+            interruptCurrentProcess(currentProcess);            
         }
 
-        // verificar se currentProcess->operations[index] == 0
-        // se sim, currentProcess->operations[index] += 1
+        if (is_running && currentProcess->operations[currentProcess->currentOperationIndex] == 0) {
+            is_running = 0;
+            interruptCurrentProcess(currentProcess);
+            nCurrentProcessTimeSlice = 0;
+        }
+
 
         if(is_empty(&queue) && is_empty(&blocked_queue) && !is_running){
             printf("nao ha mais processos\n");
@@ -129,7 +153,7 @@ int main(void){
         }
 
         // coloca um novo processo para executar
-        if(nCurrentProcessTimeSlice%4 == 0 && current_second != second_reference){
+        if(nCurrentProcessTimeSlice % 4 == 0 && current_second != second_reference){
             currentProcess = dequeue(&queue);
 
             printf("Process name: p%d\n", currentProcess->processName);
@@ -146,17 +170,20 @@ int main(void){
         }
 
         if (current_second != second_reference){
-            printf("[CLOCK] segundo atual = %d\n", second_reference);
+            printf("[CLOCK] segundo atual = %d\n", second_reference % 60);
             current_second = second_reference;
             nCurrentProcessTimeSlice ++;
             // atualizar o operation number
             int index = currentProcess->currentOperationIndex;
-            currentProcess->operations[index] -= 1;
-        } 
-
-        
-        
-        
+            if (currentProcess->operations[index] == 0) {
+                // se a operação atual foi finalizada, incrementamos o indice para fazer referência
+                // a operação seguinte
+                currentProcess->currentOperationIndex += 1;
+            } else {
+                // caso contrário, decrementamos o número de timeslices restantes da operação
+                currentProcess->operations[index] -= 1;
+            }
+        }         
     }
 }
 
