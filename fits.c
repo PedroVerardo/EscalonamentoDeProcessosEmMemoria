@@ -1,21 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "fits.h"
-
-// returns the value plus internal fragmentation
-int calculate_size(int size) {
-  if (size > 8) { return -1; } //error case
-
-  else if (size <= 2) { return 2; }
-
-  else if (size <= 4) { return 4; }
-
-  else { return 8; }
-}
 
 
 // func to convert the size to bit ocuppation O(1)
-int quadfunc(int value) { return (9 * value * value) - (48 * value) + 63; }
+int quadfunc(int value) { return  pow(2,(value)) - 1; }
 
 // print the bit occupation
 void printBits(int num) {
@@ -38,8 +28,7 @@ int first_fit(int process_tam, short *stack) {
   int bits_translocated, bits_allocated, result;
   int loop_tam = 16 - process_tam + 1;
 
-  bits_allocated = calculate_size(process_tam);
-  bits_translocated = quadfunc(bits_allocated);
+  bits_translocated = quadfunc(process_tam);
 
   for (int i = 0; i < loop_tam; i++) {
     result = *stack & bits_translocated;
@@ -62,8 +51,7 @@ void fit(short* stack, int qtd_shifts, int bits_translocated){
 
 int best_fit(int process_tam, short *stack) {
   int min = 16;
-  int partition_size = calculate_size(process_tam);
-  int bits_translocated = quadfunc(partition_size);
+  int bits_translocated = quadfunc(process_tam);
   int pos_to_allcate = -1;
   short copy = *stack;
   int cont = 0;
@@ -76,7 +64,7 @@ int best_fit(int process_tam, short *stack) {
 
     else {
       // printf("%d\n", cont);
-      if (cont < min && cont >= partition_size) {
+      if (cont < min && cont >= process_tam) {
         min = cont;
         pos_to_allcate = ini;
       }
@@ -101,8 +89,7 @@ int worst_fit(int process_tam, short *stack) {
   short copy = *stack;
   int cont = 0;
   int ini = 0;
-  int partition_size = calculate_size(process_tam);
-  int bits_translocated = quadfunc(partition_size);
+  int bits_translocated = quadfunc(process_tam);
 
   for (int i = 0; i < 17; i++) {
     if ((copy & 0x0001) == 0 && i != 16) {
@@ -111,7 +98,7 @@ int worst_fit(int process_tam, short *stack) {
 
     else {
       // printf("%d\n", cont);
-      if (cont > max && cont >= partition_size) {
+      if (cont > max && cont >= process_tam) {
         max = cont;
         pos_to_allcate = ini;
       }
@@ -130,18 +117,18 @@ int worst_fit(int process_tam, short *stack) {
 }
 
 void deallocate(int tam_in_kb, int qtd_shifts, short *stack) {
-  int partiton_size = calculate_size(tam_in_kb);
-  int bits_allocated = quadfunc(partiton_size);
+  int bits_allocated = quadfunc(tam_in_kb);
   int bits_in_position = (bits_allocated << qtd_shifts) ^ 0xffff;
   *stack &= bits_in_position;
 }
 
 // int main(void) {
-//   short stack = 0x1fff;
-//   printBits(stack);
-//   // int qtd_bitshifts = first_fit(2, &stack);
-//   int result = best_fit(3, &stack);
-//   printf("\nResult: %d\n", result);
-//   printBits(stack);
+//   // short stack = 0x1fff;
+//   // printBits(stack);
+//   // // int qtd_bitshifts = first_fit(2, &stack);
+//   // int result = best_fit(3, &stack);
+//   // printf("\nResult: %d\n", result);
+//   // printBits(stack);
+
 //   return 0;
 // }
