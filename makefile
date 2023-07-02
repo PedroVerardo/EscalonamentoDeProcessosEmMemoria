@@ -3,6 +3,7 @@ all:
 	./main
 iter:
 	gcc -Wall -o inter interpreter.c
+	./inter
 
 f:
 	gcc -Wall -o fit fits.c

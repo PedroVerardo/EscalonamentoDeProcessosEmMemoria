@@ -2,16 +2,16 @@
 #define _PARTITION_H
 
 
-typedef struct Partition{
-    int ini;
-    int tam;
-    int name;
-} partition;
+// typedef struct Segment{
+//     int ini;
+//     int tam;
+//     Process* process;
+// } segment;
 
-struct Partition_list {
-  partition val;
-  struct Partition_list *prox;
-};
-typedef struct Partition_list partition_list;
+// struct Segment_list {
+//   segment val;
+//   struct Segment_list *prox;
+// };
+// typedef struct Segment_list segment_list;
 
 #endif
