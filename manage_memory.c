@@ -14,6 +14,7 @@ Queue queue;
 Queue blocked_queue;
 short stack = 0;
 Queue inMemory_;
+int in_io = 0;
 
 char covert_int_to_char(int val){
     char zero = '0';
@@ -58,16 +59,43 @@ void vizualizer(char arr[16][2], Process p, int ini_pos){
     print_arr_char(arr);
 }
 
+void remove_process_vizualizer(char arr[16][2], Process p){
+    for(int i = 0; i < 16; i++){
+        if(i >= p.positionInMemory && i <= p.positionInMemory + p.size_in_kb- 1){
+            arr[i][0] = '0';
+            arr[i][1] = '0';
+        }
+    }
+}
+
 void* blockWhileIO(void* process) {
     Process* p = (Process*) process;
+    in_io = 1;
     int time = p->operations[p->currentOperationIndex + 1];
     printf("Bloqueando P%d para IO. Tempo de IO: %d\n", p->processName, time);
     sleep(time);
+    
     printf("IO finalizado. Retirando o processo P%d da fila de bloqueados\n", p->processName);
-    //dequeue(&blocked_queue); // retirando da fila de bloqueados
+    if(!is_empty(&blocked_queue)){
+        Process* new = dequeue(&blocked_queue); // retirando da fila de bloqueados
+        Process* new2 = new;
+        while(new->processName != p->processName){
+            enqueue(&blocked_queue,new);
+            new = dequeue(&blocked_queue);
+            if(new2 == new){
+                printf("processo p%d nao esta na fila de bloqueados\n", p->processName);
+                break;
+            }
+        }
+    }
+    else{
+        printf("Fila de bloqueados vazia processo P%d ja esta fora\n", p->processName);
+    }
+
     if (p->operations[p->currentOperationIndex + 2] == 0) { // processo finalizado
         printf("Processo P%d finalizado\n", p->processName);
         deallocate(p->size_in_kb, p->positionInMemory, &stack);
+        remove_process_vizualizer(vizualize_arr, *p);
         free(process);
     } else {
         printf("Adicionando o processo P%d na fila de prontos\n", p->processName);
@@ -75,6 +103,7 @@ void* blockWhileIO(void* process) {
         enqueue(&queue, p);
         p->isBlocked = 0;
     }
+    in_io = 0;
     pthread_exit(NULL);
 }
 
@@ -104,6 +133,7 @@ void interruptCurrentProcess(Process* currentProcess) {
     } else if (currentProcess->operations[index + 1] == 0) { // processo finalizado
         printf("O processo P%d foi finalizado\n", currentProcess->processName);
         deallocate(currentProcess->size_in_kb, currentProcess->positionInMemory, &stack);
+        remove_process_vizualizer(vizualize_arr, *currentProcess);
         free(currentProcess);
     }            
 
@@ -118,7 +148,7 @@ int main(void){
     struct timeval current_time;
     int current_second;
     int ini_pos;
-    int in_io = 0;
+    
 
     initialize(&inMemory_);
     initialize(&queue);
@@ -150,20 +180,21 @@ int main(void){
         }
 
 
-        if(is_empty(&queue) && is_empty(&blocked_queue) && !is_running){
+        if(is_empty(&queue) && !is_running && !in_io){
             printf("nao ha mais processos\n");
             break;
         }
 
         // coloca um novo processo para executar
-        if(nCurrentProcessTimeSlice % 4 == 0 && current_second != second_reference && is_running == 0){
-            currentProcess = dequeue(&queue);
+        if(nCurrentProcessTimeSlice % 4 == 0 && current_second != second_reference && !is_empty(&queue)){
+            currentProcess = peek(&queue);
 
             printf("Process name: p%d\n", currentProcess->processName);
             printf("process time: %d\n",currentProcess->operations[currentProcess->currentOperationIndex]);
 
 
             if(!currentProcess->inMemory){
+                //int blocked_queue_empty = 0;
                 ini_pos = worst_fit(currentProcess->size_in_kb, &stack);
             
                 while(ini_pos == -1){
@@ -171,23 +202,33 @@ int main(void){
                     // printBits(stack);
                     if(!is_empty(&blocked_queue)){
                         blockedProcess = dequeue(&blocked_queue);
+                        deallocate(blockedProcess->size_in_kb, blockedProcess->positionInMemory, &stack);
+                        blockedProcess->inMemory = 0;
+                        remove_process_vizualizer(vizualize_arr, *blockedProcess);
+                        ini_pos = worst_fit(currentProcess->size_in_kb, &stack);
                     }
                     else{
-                        blockedProcess = dequeue(&inMemory_);
+                        currentProcess = dequeue(&queue);
+                        enqueue(&queue,currentProcess);
+                        currentProcess = peek(&queue);
+                        if(currentProcess->inMemory){
+                            ini_pos = currentProcess->positionInMemory;
+                        }
                     }
-                    
-                    deallocate(blockedProcess->size_in_kb, blockedProcess->positionInMemory, &stack);
-                    ini_pos = worst_fit(currentProcess->size_in_kb, &stack);
-                    blockedProcess->inMemory = 0;
                 }
+
+                dequeue(&queue);
                 currentProcess->inMemory = 1;
                 currentProcess->positionInMemory = ini_pos;
                 vizualizer(vizualize_arr, *currentProcess, ini_pos);
+               
             }
             
             else{
+                dequeue(&queue);
                 vizualizer(vizualize_arr, *currentProcess, -1);
             } 
+
             printBits(stack);
             is_running = 1;
         }

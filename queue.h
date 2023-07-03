@@ -13,3 +13,4 @@ int is_full(Queue *queue);
 void enqueue(Queue *queue, Process* value);
 Process* dequeue(Queue *queue);
 void printQueue(Queue *queue);
+Process* peek(Queue *queue);

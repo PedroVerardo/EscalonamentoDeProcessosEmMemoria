@@ -56,6 +56,13 @@ void printQueue(Queue *queue) {
     printf("Null\n");
 }
 
+Process* peek(Queue *queue) {
+    if (is_empty(queue)) {
+        printf("Error: Queue is empty\n");
+        exit(1);
+    }
+    return queue->arr[queue->front];
+}
 
 // int main() {
 //     Queue my_queue;
