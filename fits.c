@@ -38,7 +38,7 @@ int first_fit(int process_tam, short *stack) {
       return i;
     }
 
-    printf("\nTentativa %d nao e possivel Result: %d\n", i + 1, result);
+    //printf("\nTentativa %d nao e possivel Result: %d\n", i, result);
     bits_translocated <<= 1;
   }
 
@@ -50,7 +50,7 @@ void fit(short* stack, int qtd_shifts, int bits_translocated){
     *stack |= (bits_translocated << qtd_shifts); }
 
 int best_fit(int process_tam, short *stack) {
-  int min = 16;
+  int min = 17;
   int bits_translocated = quadfunc(process_tam);
   int pos_to_allcate = -1;
   short copy = *stack;
